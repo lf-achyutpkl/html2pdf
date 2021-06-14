@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  del-hr-html2pdf
+
+  Sample SAM Template for del-hr-html2pdf
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 300
+    MemorySize: 512
+
+Parameters:
+  AppBucketName:
+    Type: String
+    Description: "REQUIRED: Unique S3 bucket name from where we get html file to convert."
+
+  AWSSecretName:
+    Type: String
+    default: achyut-test
+    Description: "REQUIRED: AWS Secret Name to fetch secrets."
+
+Resources:
+  Html2PdfFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: html2pdf/
+      Handler: app.html2PdfHandler
+      Runtime: nodejs12.x
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref AppBucketName
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Ref AWSSecretName
+      Events:
+        Html2Pdf:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /convert
+            Method: post
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  Html2PdfApi:
+    Description: "API Gateway endpoint URL for Prod stage for Html2PdfFunction"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/html2pdf/"
+  Html2PdfFunction:
+    Description: "Html2PdfFunction Lambda Function ARN"
+    Value: !GetAtt Html2PdfFunction.Arn
+  Html2PdfFunctionIamRole:
+    Description: "Implicit IAM Role created for Html2PdfFunction"
+    Value: !GetAtt Html2PdfFunction.Arn
